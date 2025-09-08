@@ -1,7 +1,11 @@
-# Paycan Payment Integration Service
+# Paycan - Payment Integration Service
 
 <!-- Banner placeholder - Add your project banner/logo here -->
 ![Project Screebshot](https://i.imghippo.com/files/CFjt6957sKU.png)
+
+**⚠️ Development Notice**
+
+ This application is currently under active development and is **not production-ready**. Please use this for learning, development, and testing purposes only. Want to contribute? We'd love your help! Check out our [contribution guidelines](#-contributing) below to get started.
 
 ## 🚀 Philosophy
 
@@ -9,11 +13,7 @@
 
 We believe every developer should be able to collect money with just a few lines of code, without being locked into a single payment provider. Our mission is to create a unified, vendor-agnostic payment integration that works seamlessly with any payment gateway while maintaining simplicity and flexibility.
 
-**⚠️ Development Notice**
-
- This application is currently under active development and is **not production-ready**. Please use this for learning, development, and testing purposes only.
- 
- Want to contribute? We'd love your help! Check out our [contribution guidelines](#-contributing) below to get started.
+No webhook handling, no customer creation, no subscription management.
 
 ### Core Principles
 
