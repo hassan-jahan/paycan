@@ -1,7 +1,7 @@
 # Paycan Payment Integration Service
 
 <!-- Banner placeholder - Add your project banner/logo here -->
-![Project Banner](https://via.placeholder.com/800x200/2563eb/ffffff?text=Laravel+Payment+Integration)
+![Project Screebshot](https://i.imghippo.com/files/CFjt6957sKU.png)
 
 ## 🚀 Philosophy
 
@@ -13,7 +13,7 @@ We believe every developer should be able to collect money with just a few lines
 
  This application is currently under active development and is **not production-ready**. Please use this for learning, development, and testing purposes only.
  
- 🚀 **Want to contribute?** We'd love your help! Check out our [contribution guidelines](#-contributing) below to get started.
+ Want to contribute? We'd love your help! Check out our [contribution guidelines](#-contributing) below to get started.
 
 ### Core Principles
 

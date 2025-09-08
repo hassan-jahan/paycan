@@ -27,4 +27,4 @@ yarn-error.log
 /.idea
 /.cursor
 /.junie
-
+**/.DS_Store
