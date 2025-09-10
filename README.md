@@ -1,7 +1,12 @@
 # Paycan - Payment Integration Service
 
 <!-- Banner placeholder - Add your project banner/logo here -->
-![Project Screebshot](https://i.imghippo.com/files/CFjt6957sKU.png)
+<!-- ![Project Screebshot](https://i.imghippo.com/files/CFjt6957sKU.png) -->
+
+<p align="center">
+  <img src="https://i.imghippo.com/files/HJK6444eGY.jpeg" alt="Image 2" width="54%"/>
+  <img src="https://i.imghippo.com/files/mNzB7064odo.jpeg" alt="Image 1" width="36%"/>
+</p>
 
 **⚠️ Development Notice**
 
