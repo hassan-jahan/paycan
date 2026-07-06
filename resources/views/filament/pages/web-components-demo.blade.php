@@ -79,6 +79,9 @@
             border-radius: 9999px;
             background-color: currentColor;
         }
+        .needs-auth {
+            opacity: 0.5;
+        }
     </style>
 
     @if (!$productId)
@@ -105,16 +108,15 @@
             <div class="demo-section">
                 <div>
                     <h3 class="text-base font-semibold mb-2">Step 1: Include SDK</h3>
-                    <p class="text-sm text-gray-600 dark:text-gray-400">Add the SDK to your HTML page.</p>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Import the hosted ES module straight from your PayCan instance — no build step needed.</p>
                 </div>
                 <div class="demo-code">
-                    <button class="copy-button" onclick="copyCode(this, 'setup-1')">Copy</button>
+                    <button type="button" class="copy-button" data-copy-target="setup-1">Copy</button>
                     <pre id="setup-1"><code>&lt;script type="module"&gt;
-  import { PayCan } from '/sdk/paycan-sdk.js';
+  import { PayCan } from '{{ config('app.url') }}/sdk/paycan-sdk.js';
 
   const paycan = new PayCan({
     apiUrl: '{{ config('app.url') }}',
-    debug: true
   });
 
   window.paycan = paycan;
@@ -125,29 +127,26 @@
             <div class="demo-section">
                 <div>
                     <h3 class="text-base font-semibold mb-2">Step 2: Get Token from Backend</h3>
-                    <p class="text-sm text-gray-600 dark:text-gray-400">Never expose your API secret in frontend! Always get tokens from your backend.</p>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Never expose your API secret in frontend! Always get tokens from your backend, and take the user from <em>your</em> session — never from the request body.</p>
                 </div>
                 <div class="demo-code">
-                    <button class="copy-button" onclick="copyCode(this, 'setup-2')">Copy</button>
+                    <button type="button" class="copy-button" data-copy-target="setup-2">Copy</button>
                     <pre id="setup-2"><code>// Backend endpoint (Express.js example)
 app.post('/api/paycan/token', requireAuth, async (req, res) => {
-  const userId = req.session.userId;
-  const user = await User.findById(userId);
-
   const response = await fetch('{{ config('app.url') }}/api/admin/users/sync', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'X-API-Key': process.env.PAYCAN_API_SECRET
+      'X-API-Key': process.env.PAYCAN_API_SECRET, // secret key: backend only!
     },
     body: JSON.stringify({
-      user_id: user.id,
-      user: { name: user.name, email: user.email }
-    })
+      user_id: req.session.userId, // from YOUR session — not the request body
+      user: { name: req.user.name, email: req.user.email },
+    }),
   });
 
-  const data = await response.json();
-  res.json({ token: data.token });
+  const { token } = await response.json();
+  res.json({ token }); // return ONLY the token to the browser
 });</code></pre>
                 </div>
             </div>
@@ -155,10 +154,10 @@ app.post('/api/paycan/token', requireAuth, async (req, res) => {
             <div class="demo-section">
                 <div>
                     <h3 class="text-base font-semibold mb-2">Step 3: Set Token</h3>
-                    <p class="text-sm text-gray-600 dark:text-gray-400">Initialize SDK with user token on app load.</p>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Initialize the SDK with the user token on app load, or right after your login flow succeeds. Without a token, checkouts still work as guest.</p>
                 </div>
                 <div class="demo-code">
-                    <button class="copy-button" onclick="copyCode(this, 'setup-3')">Copy</button>
+                    <button type="button" class="copy-button" data-copy-target="setup-3">Copy</button>
                     <pre id="setup-3"><code>// On app load
 async function initPayCan() {
   const response = await fetch('/api/paycan/token');
@@ -186,7 +185,7 @@ initPayCan();</code></pre>
                 <p class="text-sm font-medium mb-2">Current Status:</p>
                 <span id="authStatusBadge" class="auth-badge guest">
                     <span class="auth-indicator"></span>
-                    <span>Guest Mode</span>
+                    <span data-auth-label>Guest Mode</span>
                 </span>
                 <div id="userInfoDisplay" style="display: none;" class="mt-2 text-sm text-gray-600 dark:text-gray-400">
                     Authenticated as: <strong>{{ $demoUser->email }}</strong>
@@ -195,13 +194,13 @@ initPayCan();</code></pre>
                 <div class="mt-4">
                     <p class="text-sm font-medium mb-2">Actions:</p>
                     <div class="flex flex-wrap gap-2">
-                        <x-filament::button id="loginButton" onclick="loginAsDemo(); return false;">
+                        <x-filament::button data-demo-action="login">
                             Login as Demo User
                         </x-filament::button>
-                        <x-filament::button id="logoutButton" onclick="logoutDemo(); return false;" color="danger" disabled>
+                        <x-filament::button data-demo-action="logout" color="danger">
                             Logout
                         </x-filament::button>
-                        <x-filament::button onclick="checkAuthStatus(); return false;" color="gray">
+                        <x-filament::button data-demo-action="check-status" color="gray">
                             Check Status
                         </x-filament::button>
                     </div>
@@ -211,7 +210,7 @@ initPayCan();</code></pre>
             <div>
                 <p class="text-sm font-medium mb-2">Code:</p>
                 <div class="demo-code">
-                    <button class="copy-button" onclick="copyCode(this, 'auth-code')">Copy</button>
+                    <button type="button" class="copy-button" data-copy-target="auth-code">Copy</button>
                     <pre id="auth-code"><code>// Login
 paycan.setUserToken(token);
 
@@ -238,12 +237,12 @@ paycan.isAuthenticated(); // boolean</code></pre>
         <div class="demo-section">
             <div>
                 <p class="text-sm font-medium mb-2">Product Checkout:</p>
-                <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">Opens modal showing all prices.</p>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">Opens modal showing all prices. Guests are asked for an email automatically.</p>
                 <div class="flex flex-wrap gap-2 mb-4">
-                    <x-filament::button onclick="openGuestCheckoutProduct('light'); return false;">
+                    <x-filament::button data-demo-action="checkout-product" data-theme="light">
                         Light
                     </x-filament::button>
-                    <x-filament::button onclick="openGuestCheckoutProduct('dark'); return false;" color="gray">
+                    <x-filament::button data-demo-action="checkout-product" data-theme="dark" color="gray">
                         Dark
                     </x-filament::button>
                 </div>
@@ -251,10 +250,10 @@ paycan.isAuthenticated(); // boolean</code></pre>
                 <p class="text-sm font-medium mb-2 mt-6">Specific Price:</p>
                 <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">Direct checkout for specific price.</p>
                 <div class="flex flex-wrap gap-2">
-                    <x-filament::button onclick="openGuestCheckoutPrice('light'); return false;">
+                    <x-filament::button data-demo-action="checkout-price" data-theme="light">
                         Light
                     </x-filament::button>
-                    <x-filament::button onclick="openGuestCheckoutPrice('dark'); return false;" color="gray">
+                    <x-filament::button data-demo-action="checkout-price" data-theme="dark" color="gray">
                         Dark
                     </x-filament::button>
                 </div>
@@ -263,18 +262,19 @@ paycan.isAuthenticated(); // boolean</code></pre>
             <div>
                 <p class="text-sm font-medium mb-2">Code:</p>
                 <div class="demo-code">
-                    <button class="copy-button" onclick="copyCode(this, 'checkout-guest')">Copy</button>
-                    <pre id="checkout-guest"><code>// Guest checkout works without authentication
-// The SDK will show email field automatically
-paycan.openCheckoutModal({{ $productId }}, {
+                    <button type="button" class="copy-button" data-copy-target="checkout-guest">Copy</button>
+                    <pre id="checkout-guest"><code>// Guest checkout works without authentication —
+// the SDK shows an email field automatically.
+paycan.openCheckoutModal('{{ $productId }}', {
   theme: 'light',
-  onSuccess: (url) => {
-    window.location.href = url;
-  }
+  onSuccess: (checkoutUrl) => {
+    window.location.href = checkoutUrl;
+  },
 });
 
-paycan.openCheckoutModalPrice({{ $priceId }}, {
-  theme: 'dark'
+// Or open checkout for one specific price:
+paycan.openCheckoutModalPrice('{{ $priceId }}', {
+  theme: 'dark',
 });</code></pre>
                 </div>
             </div>
@@ -292,17 +292,17 @@ paycan.openCheckoutModalPrice({{ $priceId }}, {
 
         <div class="demo-section">
             <div>
-                <div id="authCheckoutWarning" class="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-200 rounded-lg text-sm" style="display: none;">
+                <div data-auth-warning class="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-200 rounded-lg text-sm" style="display: none;">
                     Please login first using the Authentication section.
                 </div>
 
                 <p class="text-sm font-medium mb-2">Product Checkout:</p>
                 <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">Email is auto-filled from token.</p>
                 <div class="flex flex-wrap gap-2 mb-4">
-                    <x-filament::button class="auth-required" onclick="openAuthCheckoutProduct('light'); return false;" disabled>
+                    <x-filament::button data-demo-action="checkout-product" data-theme="light" data-requires-auth>
                         Light
                     </x-filament::button>
-                    <x-filament::button class="auth-required" onclick="openAuthCheckoutProduct('dark'); return false;" color="gray" disabled>
+                    <x-filament::button data-demo-action="checkout-product" data-theme="dark" color="gray" data-requires-auth>
                         Dark
                     </x-filament::button>
                 </div>
@@ -310,10 +310,10 @@ paycan.openCheckoutModalPrice({{ $priceId }}, {
                 <p class="text-sm font-medium mb-2 mt-6">Specific Price:</p>
                 <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">Direct checkout with authentication.</p>
                 <div class="flex flex-wrap gap-2">
-                    <x-filament::button class="auth-required" onclick="openAuthCheckoutPrice('light'); return false;" disabled>
+                    <x-filament::button data-demo-action="checkout-price" data-theme="light" data-requires-auth>
                         Light
                     </x-filament::button>
-                    <x-filament::button class="auth-required" onclick="openAuthCheckoutPrice('dark'); return false;" color="gray" disabled>
+                    <x-filament::button data-demo-action="checkout-price" data-theme="dark" color="gray" data-requires-auth>
                         Dark
                     </x-filament::button>
                 </div>
@@ -322,12 +322,14 @@ paycan.openCheckoutModalPrice({{ $priceId }}, {
             <div>
                 <p class="text-sm font-medium mb-2">Code:</p>
                 <div class="demo-code">
-                    <button class="copy-button" onclick="copyCode(this, 'checkout-auth')">Copy</button>
+                    <button type="button" class="copy-button" data-copy-target="checkout-auth">Copy</button>
                     <pre id="checkout-auth"><code>paycan.setUserToken(token);
 
-paycan.openCheckoutModal({{ $productId }}, {
+paycan.openCheckoutModal('{{ $productId }}', {
   theme: 'light',
-  onSuccess: (url) => window.location.href = url
+  onSuccess: (checkoutUrl) => {
+    window.location.href = checkoutUrl;
+  },
 });</code></pre>
                 </div>
             </div>
@@ -347,20 +349,20 @@ paycan.openCheckoutModal({{ $productId }}, {
             <div>
                 <p class="text-sm font-medium mb-2">All Products:</p>
                 <div class="flex flex-wrap gap-2 mb-4">
-                    <x-filament::button onclick="openProductsModal('light'); return false;">
+                    <x-filament::button data-demo-action="products" data-theme="light">
                         Light
                     </x-filament::button>
-                    <x-filament::button onclick="openProductsModal('dark'); return false;" color="gray">
+                    <x-filament::button data-demo-action="products" data-theme="dark" color="gray">
                         Dark
                     </x-filament::button>
                 </div>
 
                 <p class="text-sm font-medium mb-2 mt-6">Filtered:</p>
                 <div class="flex flex-wrap gap-2">
-                    <x-filament::button onclick="openProductsModalFiltered('subscription'); return false;" color="info">
+                    <x-filament::button data-demo-action="products" data-type="subscription" color="info">
                         Subscriptions
                     </x-filament::button>
-                    <x-filament::button onclick="openProductsModalFiltered('digital'); return false;" color="success">
+                    <x-filament::button data-demo-action="products" data-type="digital" color="success">
                         Digital
                     </x-filament::button>
                 </div>
@@ -369,15 +371,15 @@ paycan.openCheckoutModal({{ $productId }}, {
             <div>
                 <p class="text-sm font-medium mb-2">Code:</p>
                 <div class="demo-code">
-                    <button class="copy-button" onclick="copyCode(this, 'products')">Copy</button>
+                    <button type="button" class="copy-button" data-copy-target="products">Copy</button>
                     <pre id="products"><code>paycan.openProductsModal({
   theme: 'light',
-  onProductSelected: (p) => console.log(p)
+  onProductSelected: (product) => console.log(product),
 });
 
 paycan.openProductsModal({
   type: 'subscription',
-  theme: 'dark'
+  theme: 'dark',
 });</code></pre>
                 </div>
             </div>
@@ -396,17 +398,17 @@ paycan.openProductsModal({
 
         <div class="demo-section">
             <div>
-                <div id="subsWarning" class="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-200 rounded-lg text-sm" style="display: none;">
+                <div data-auth-warning class="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-200 rounded-lg text-sm" style="display: none;">
                     Please login first.
                 </div>
 
                 <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">View subscriptions with status and billing info.</p>
 
                 <div class="flex flex-wrap gap-2">
-                    <x-filament::button class="auth-required" onclick="openSubscriptionsModal('light'); return false;" disabled>
+                    <x-filament::button data-demo-action="subscriptions" data-theme="light" data-requires-auth>
                         Light
                     </x-filament::button>
-                    <x-filament::button class="auth-required" onclick="openSubscriptionsModal('dark'); return false;" color="gray" disabled>
+                    <x-filament::button data-demo-action="subscriptions" data-theme="dark" color="gray" data-requires-auth>
                         Dark
                     </x-filament::button>
                 </div>
@@ -415,11 +417,11 @@ paycan.openProductsModal({
             <div>
                 <p class="text-sm font-medium mb-2">Code:</p>
                 <div class="demo-code">
-                    <button class="copy-button" onclick="copyCode(this, 'subs')">Copy</button>
-                    <pre id="subs"><code>import { SubscriptionsModal } from '/sdk/paycan-sdk.js';
+                    <button type="button" class="copy-button" data-copy-target="subs">Copy</button>
+                    <pre id="subs"><code>import { SubscriptionsModal } from '{{ config('app.url') }}/sdk/paycan-sdk.js';
 
 const modal = new SubscriptionsModal(paycan, {
-  theme: 'light'
+  theme: 'light',
 });
 modal.open();</code></pre>
                 </div>
@@ -438,17 +440,17 @@ modal.open();</code></pre>
 
         <div class="demo-section">
             <div>
-                <div id="ordersWarning" class="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-200 rounded-lg text-sm" style="display: none;">
+                <div data-auth-warning class="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-200 rounded-lg text-sm" style="display: none;">
                     Please login first.
                 </div>
 
                 <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">View orders with payment details and downloads.</p>
 
                 <div class="flex flex-wrap gap-2">
-                    <x-filament::button class="auth-required" onclick="openOrdersModal('light'); return false;" disabled>
+                    <x-filament::button data-demo-action="orders" data-theme="light" data-requires-auth>
                         Light
                     </x-filament::button>
-                    <x-filament::button class="auth-required" onclick="openOrdersModal('dark'); return false;" color="gray" disabled>
+                    <x-filament::button data-demo-action="orders" data-theme="dark" color="gray" data-requires-auth>
                         Dark
                     </x-filament::button>
                 </div>
@@ -457,11 +459,11 @@ modal.open();</code></pre>
             <div>
                 <p class="text-sm font-medium mb-2">Code:</p>
                 <div class="demo-code">
-                    <button class="copy-button" onclick="copyCode(this, 'orders')">Copy</button>
-                    <pre id="orders"><code>import { OrdersModal } from '/sdk/paycan-sdk.js';
+                    <button type="button" class="copy-button" data-copy-target="orders">Copy</button>
+                    <pre id="orders"><code>import { OrdersModal } from '{{ config('app.url') }}/sdk/paycan-sdk.js';
 
 const modal = new OrdersModal(paycan, {
-  theme: 'dark'
+  theme: 'dark',
 });
 modal.open();</code></pre>
                 </div>
@@ -480,17 +482,17 @@ modal.open();</code></pre>
 
         <div class="demo-section">
             <div>
-                <div id="transactionsWarning" class="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-200 rounded-lg text-sm" style="display: none;">
+                <div data-auth-warning class="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-200 rounded-lg text-sm" style="display: none;">
                     Please login first.
                 </div>
 
                 <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">View transactions with gateway info and status.</p>
 
                 <div class="flex flex-wrap gap-2">
-                    <x-filament::button class="auth-required" onclick="openTransactionsModal('light'); return false;" disabled>
+                    <x-filament::button data-demo-action="transactions" data-theme="light" data-requires-auth>
                         Light
                     </x-filament::button>
-                    <x-filament::button class="auth-required" onclick="openTransactionsModal('dark'); return false;" color="gray" disabled>
+                    <x-filament::button data-demo-action="transactions" data-theme="dark" color="gray" data-requires-auth>
                         Dark
                     </x-filament::button>
                 </div>
@@ -499,11 +501,11 @@ modal.open();</code></pre>
             <div>
                 <p class="text-sm font-medium mb-2">Code:</p>
                 <div class="demo-code">
-                    <button class="copy-button" onclick="copyCode(this, 'transactions')">Copy</button>
-                    <pre id="transactions"><code>import { TransactionsModal } from '/sdk/paycan-sdk.js';
+                    <button type="button" class="copy-button" data-copy-target="transactions">Copy</button>
+                    <pre id="transactions"><code>import { TransactionsModal } from '{{ config('app.url') }}/sdk/paycan-sdk.js';
 
 const modal = new TransactionsModal(paycan, {
-  theme: 'light'
+  theme: 'light',
 });
 modal.open();</code></pre>
                 </div>
@@ -517,7 +519,7 @@ modal.open();</code></pre>
             API Reference
         </x-slot>
         <x-slot name="description">
-            Common SDK methods and usage examples.
+            Common SDK methods and usage examples. Tip: <code>window.paycan</code> is exposed on this page — try these in the browser console.
         </x-slot>
 
         <div class="space-y-6">
@@ -527,12 +529,12 @@ modal.open();</code></pre>
                     <p class="text-sm text-gray-600 dark:text-gray-400">Set tokens, check status, logout.</p>
                 </div>
                 <div class="demo-code">
-                    <button class="copy-button" onclick="copyCode(this, 'api-auth')">Copy</button>
+                    <button type="button" class="copy-button" data-copy-target="api-auth">Copy</button>
                     <pre id="api-auth"><code>paycan.setUserToken(token);
 paycan.isAuthenticated(); // boolean
 paycan.getToken();
 paycan.logout();
-const { user } = await paycan.me();</code></pre>
+const { data: user } = await paycan.me();</code></pre>
                 </div>
             </div>
 
@@ -542,11 +544,11 @@ const { user } = await paycan.me();</code></pre>
                     <p class="text-sm text-gray-600 dark:text-gray-400">List orders, get downloads, licenses.</p>
                 </div>
                 <div class="demo-code">
-                    <button class="copy-button" onclick="copyCode(this, 'api-orders')">Copy</button>
+                    <button type="button" class="copy-button" data-copy-target="api-orders">Copy</button>
                     <pre id="api-orders"><code>await paycan.orders.list({
   filter: { status: 'completed' },
   include: 'productPrice.product',
-  sort: '-created_at'
+  sort: '-created_at',
 });
 await paycan.orders.get(orderId);
 await paycan.orders.getDownloads(orderId);
@@ -557,13 +559,14 @@ await paycan.orders.getLicenses(orderId);</code></pre>
             <div class="demo-section">
                 <div>
                     <h3 class="text-base font-semibold mb-2">Subscriptions API</h3>
-                    <p class="text-sm text-gray-600 dark:text-gray-400">Manage subscriptions.</p>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Manage subscriptions. <code>listActive()</code> is cached (60s) — safe to call on every page view.</p>
                 </div>
                 <div class="demo-code">
-                    <button class="copy-button" onclick="copyCode(this, 'api-subs')">Copy</button>
+                    <button type="button" class="copy-button" data-copy-target="api-subs">Copy</button>
                     <pre id="api-subs"><code>await paycan.subscriptions.list({
-  filter: { status: 'active' }
+  filter: { status: 'active' },
 });
+await paycan.subscriptions.listActive();
 await paycan.subscriptions.get(id);
 await paycan.subscriptions.cancel(id);
 await paycan.subscriptions.resume(id);</code></pre>
@@ -576,12 +579,34 @@ await paycan.subscriptions.resume(id);</code></pre>
                     <p class="text-sm text-gray-600 dark:text-gray-400">List and retrieve products.</p>
                 </div>
                 <div class="demo-code">
-                    <button class="copy-button" onclick="copyCode(this, 'api-products')">Copy</button>
+                    <button type="button" class="copy-button" data-copy-target="api-products">Copy</button>
                     <pre id="api-products"><code>await paycan.products.list({
   filter: { type: 'subscription' },
-  include: 'prices'
+  include: 'prices',
 });
 await paycan.products.get(id);</code></pre>
+                </div>
+            </div>
+
+            <div class="demo-section">
+                <div>
+                    <h3 class="text-base font-semibold mb-2">Checkout API</h3>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Preview totals and create checkout sessions with your own UI.</p>
+                </div>
+                <div class="demo-code">
+                    <button type="button" class="copy-button" data-copy-target="api-checkout">Copy</button>
+                    <pre id="api-checkout"><code>const preview = await paycan.checkout.preview({
+  product_id: '{{ $productId ?? 'product-id' }}',
+  quantity: 2,
+});
+
+const session = await paycan.checkout.create({
+  product_id: '{{ $productId ?? 'product-id' }}',
+  product_price_id: '{{ $priceId ?? 'price-id' }}',
+  gateway: 'stripe',
+  billing_email: 'guest@example.com', // guests only
+});
+// then: window.location.href = session.checkout_url;</code></pre>
                 </div>
             </div>
 
@@ -591,10 +616,10 @@ await paycan.products.get(id);</code></pre>
                     <p class="text-sm text-gray-600 dark:text-gray-400">View transactions.</p>
                 </div>
                 <div class="demo-code">
-                    <button class="copy-button" onclick="copyCode(this, 'api-trans')">Copy</button>
+                    <button type="button" class="copy-button" data-copy-target="api-trans">Copy</button>
                     <pre id="api-trans"><code>await paycan.transactions.list({
   filter: { status: 'succeeded' },
-  sort: '-created_at'
+  sort: '-created_at',
 });
 await paycan.transactions.get(id);</code></pre>
                 </div>
@@ -605,186 +630,140 @@ await paycan.transactions.get(id);</code></pre>
     <script type="module">
         import { PayCan, SubscriptionsModal, OrdersModal, TransactionsModal } from '/sdk/paycan-sdk.js?v={{ filemtime(public_path('sdk/paycan-sdk.js')) }}';
 
+        const DEMO_TOKEN = {{ Js::from($token) }};
+        const PRODUCT_ID = {{ Js::from($productId) }};
+        const PRICE_ID = {{ Js::from($priceId) }};
+
         const paycan = new PayCan({
-            apiUrl: {{ Js::from(config('app.url')) }},
-            debug: true
+            apiUrl: window.location.origin,
+            debug: true,
         });
 
         window.paycan = paycan;
-        window.SubscriptionsModal = SubscriptionsModal;
-        window.OrdersModal = OrdersModal;
-        window.TransactionsModal = TransactionsModal;
-        window.demoToken = {{ Js::from($token) }};
-        window.demoProductId = {{ Js::from($productId) }};
-        window.demoPriceId = {{ Js::from($priceId) }};
 
-        console.log('SDK loaded');
-
-        // Check authentication immediately after SDK initialization
-        // The SDK automatically loads token from localStorage in constructor
-        const isAuth = paycan.isAuthenticated();
-        console.log('Initial auth status:', isAuth);
-
-        // Trigger UI update once DOM is ready
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', () => {
-                if (typeof window.updateAuthUI === 'function') {
-                    window.updateAuthUI(isAuth);
-                    if (isAuth) {
-                        console.log('Restored authentication from localStorage');
-                    }
-                }
-            });
-        } else {
-            // DOM already loaded, wait a bit for the regular script to define updateAuthUI
-            setTimeout(() => {
-                if (typeof window.updateAuthUI === 'function') {
-                    window.updateAuthUI(isAuth);
-                    if (isAuth) {
-                        console.log('Restored authentication from localStorage');
-                    }
-                }
-            }, 100);
+        function notify(title, type = 'info', body = null) {
+            const notification = new FilamentNotification().title(title).duration(4000);
+            if (body) {
+                notification.body(body);
+            }
+            notification[type]().send();
         }
-    </script>
 
-    <script>
-        function copyCode(btn, id) {
-            const code = document.getElementById(id).textContent;
-            navigator.clipboard.writeText(code).then(() => {
-                const orig = btn.textContent;
-                btn.textContent = "Copied!";
-                btn.classList.add("copied");
+        function requireAuth() {
+            if (paycan.isAuthenticated()) {
+                return true;
+            }
+            notify('Please login first using the Authentication section.', 'warning');
+            return false;
+        }
+
+        function syncAuthUi() {
+            const isAuthed = paycan.isAuthenticated();
+
+            const badge = document.getElementById('authStatusBadge');
+            badge.className = isAuthed ? 'auth-badge authenticated' : 'auth-badge guest';
+            badge.querySelector('[data-auth-label]').textContent = isAuthed ? 'Authenticated' : 'Guest Mode';
+
+            document.getElementById('userInfoDisplay').style.display = isAuthed ? 'block' : 'none';
+
+            document.querySelectorAll('[data-requires-auth]').forEach((el) => {
+                el.classList.toggle('needs-auth', !isAuthed);
+            });
+            document.querySelectorAll('[data-auth-warning]').forEach((el) => {
+                el.style.display = isAuthed ? 'none' : 'block';
+            });
+            document.querySelectorAll('[data-demo-action="login"]').forEach((el) => {
+                el.classList.toggle('needs-auth', isAuthed);
+            });
+            document.querySelectorAll('[data-demo-action="logout"]').forEach((el) => {
+                el.classList.toggle('needs-auth', !isAuthed);
+            });
+        }
+
+        const modalOptions = (trigger) => ({
+            theme: trigger?.dataset.theme ?? 'light',
+            onError: (error) => notify(error.message ?? 'Something went wrong.', 'danger'),
+        });
+
+        const checkoutOptions = (trigger) => ({
+            ...modalOptions(trigger),
+            onSuccess: (checkoutUrl) => {
+                console.log('[Demo] Checkout URL:', checkoutUrl);
+                notify('Checkout session created', 'success', 'In production the customer is now redirected to the gateway. URL logged to the console.');
+            },
+            onCancel: () => notify('Checkout cancelled', 'info'),
+        });
+
+        const actions = {
+            'login': () => {
+                paycan.setUserToken(DEMO_TOKEN);
+                syncAuthUi();
+                notify('Logged in as demo user', 'success');
+            },
+            'logout': () => {
+                if (!paycan.isAuthenticated()) {
+                    notify('Already in guest mode', 'info');
+                    return;
+                }
+                paycan.logout();
+                syncAuthUi();
+                notify('Logged out', 'success');
+            },
+            'check-status': () => {
+                notify(paycan.isAuthenticated() ? 'Authenticated' : 'Guest mode', 'info');
+            },
+            'checkout-product': (trigger) => paycan.openCheckoutModal(PRODUCT_ID, checkoutOptions(trigger)),
+            'checkout-price': (trigger) => paycan.openCheckoutModalPrice(PRICE_ID, checkoutOptions(trigger)),
+            'products': (trigger) => paycan.openProductsModal({
+                ...modalOptions(trigger),
+                type: trigger.dataset.type || undefined,
+                onProductSelected: (product) => notify('Selected: ' + (product.title ?? product.name ?? product.id), 'success'),
+            }),
+            'subscriptions': (trigger) => new SubscriptionsModal(paycan, modalOptions(trigger)).open(),
+            'orders': (trigger) => new OrdersModal(paycan, modalOptions(trigger)).open(),
+            'transactions': (trigger) => new TransactionsModal(paycan, modalOptions(trigger)).open(),
+        };
+
+        async function copyCode(button) {
+            const code = document.getElementById(button.dataset.copyTarget)?.textContent ?? '';
+            try {
+                await navigator.clipboard.writeText(code);
+                button.textContent = 'Copied!';
+                button.classList.add('copied');
                 setTimeout(() => {
-                    btn.textContent = orig;
-                    btn.classList.remove("copied");
+                    button.textContent = 'Copy';
+                    button.classList.remove('copied');
                 }, 2000);
-            });
-        }
-
-        function showMsg(msg, type) {
-            if (typeof Filament !== "undefined" && Filament.Notification) {
-                const notif = new Filament.Notification();
-                notif.title(msg).duration(3000);
-                if (type === "success") notif.success();
-                else if (type === "error") notif.danger();
-                else notif.info();
-                notif.send();
+            } catch {
+                notify('Copy failed — select the text manually.', 'danger');
             }
         }
 
-        function loginAsDemo() {
-            if (!window.paycan) {
-                showMsg("SDK loading...", "error");
+        document.addEventListener('click', (event) => {
+            const copyButton = event.target.closest('[data-copy-target]');
+            if (copyButton) {
+                copyCode(copyButton);
                 return;
             }
-            window.paycan.setUserToken(window.demoToken);
-            updateAuthUI(true);
-            showMsg("Logged in!", "success");
-        }
 
-        function logoutDemo() {
-            if (!window.paycan) return;
-            window.paycan.logout();
-            updateAuthUI(false);
-            showMsg("Logged out!", "success");
-        }
-
-        function checkAuthStatus() {
-            if (!window.paycan) {
-                showMsg("SDK loading...", "error");
+            const trigger = event.target.closest('[data-demo-action]');
+            if (!trigger) {
                 return;
             }
-            const isAuth = window.paycan.isAuthenticated();
-            showMsg(isAuth ? "Authenticated" : "Guest mode", isAuth ? "success" : "info");
-        }
 
-        function updateAuthUI(isAuth) {
-            const badge = document.getElementById("authStatusBadge");
-            const info = document.getElementById("userInfoDisplay");
-            const loginBtn = document.getElementById("loginButton");
-            const logoutBtn = document.getElementById("logoutButton");
-            const authReq = document.querySelectorAll(".auth-required");
-
-            if (isAuth) {
-                badge.className = "auth-badge authenticated";
-                badge.innerHTML = '<span class="auth-indicator"></span><span>Authenticated</span>';
-                info.style.display = "block";
-                loginBtn.disabled = true;
-                logoutBtn.disabled = false;
-                authReq.forEach(btn => btn.disabled = false);
-                ["authCheckoutWarning", "subsWarning", "ordersWarning", "transactionsWarning"].forEach(id => {
-                    const el = document.getElementById(id);
-                    if (el) el.style.display = "none";
-                });
-            } else {
-                badge.className = "auth-badge guest";
-                badge.innerHTML = '<span class="auth-indicator"></span><span>Guest Mode</span>';
-                info.style.display = "none";
-                loginBtn.disabled = false;
-                logoutBtn.disabled = true;
-                authReq.forEach(btn => btn.disabled = true);
-                ["authCheckoutWarning", "subsWarning", "ordersWarning", "transactionsWarning"].forEach(id => {
-                    const el = document.getElementById(id);
-                    if (el) el.style.display = "block";
-                });
+            if (trigger.hasAttribute('data-requires-auth') && !requireAuth()) {
+                return;
             }
-        }
 
-        function openGuestCheckoutProduct(theme) {
-            if (!window.paycan) return showMsg("SDK loading...", "error");
-            window.paycan.openCheckoutModal(window.demoProductId, { theme });
-        }
+            actions[trigger.dataset.demoAction]?.(trigger);
+        });
 
-        function openGuestCheckoutPrice(theme) {
-            if (!window.paycan) return showMsg("SDK loading...", "error");
-            window.paycan.openCheckoutModalPrice(window.demoPriceId, { theme });
+        // The SDK restores its token from localStorage in the constructor. If a
+        // previous visit left the demo signed in, replace that (possibly stale)
+        // token with the fresh one issued for this page load.
+        if (paycan.isAuthenticated()) {
+            paycan.setUserToken(DEMO_TOKEN);
         }
-
-        function openAuthCheckoutProduct(theme) {
-            if (!window.paycan) return showMsg("SDK loading...", "error");
-            if (!window.paycan.isAuthenticated()) return showMsg("Please login first", "error");
-            window.paycan.openCheckoutModal(window.demoProductId, { theme });
-        }
-
-        function openAuthCheckoutPrice(theme) {
-            if (!window.paycan) return showMsg("SDK loading...", "error");
-            if (!window.paycan.isAuthenticated()) return showMsg("Please login first", "error");
-            window.paycan.openCheckoutModalPrice(window.demoPriceId, { theme });
-        }
-
-        function openProductsModal(theme) {
-            if (!window.paycan) return showMsg("SDK loading...", "error");
-            window.paycan.openProductsModal({ theme });
-        }
-
-        function openProductsModalFiltered(type) {
-            if (!window.paycan) return showMsg("SDK loading...", "error");
-            window.paycan.openProductsModal({ type, theme: "light" });
-        }
-
-        function openSubscriptionsModal(theme) {
-            if (!window.paycan || !window.SubscriptionsModal) return showMsg("SDK loading...", "error");
-            if (!window.paycan.isAuthenticated()) return showMsg("Please login first", "error");
-            const modal = new window.SubscriptionsModal(window.paycan, { theme });
-            modal.open();
-        }
-
-        function openOrdersModal(theme) {
-            if (!window.paycan || !window.OrdersModal) return showMsg("SDK loading...", "error");
-            if (!window.paycan.isAuthenticated()) return showMsg("Please login first", "error");
-            const modal = new window.OrdersModal(window.paycan, { theme });
-            modal.open();
-        }
-
-        function openTransactionsModal(theme) {
-            if (!window.paycan || !window.TransactionsModal) return showMsg("SDK loading...", "error");
-            if (!window.paycan.isAuthenticated()) return showMsg("Please login first", "error");
-            const modal = new window.TransactionsModal(window.paycan, { theme });
-            modal.open();
-        }
-
-        // Make updateAuthUI globally accessible for the module script
-        window.updateAuthUI = updateAuthUI;
+        syncAuthUi();
     </script>
 </x-filament-panels::page>

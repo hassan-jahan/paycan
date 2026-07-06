@@ -2,6 +2,14 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <script>
+    // Some servers (e.g. PHP's built-in server behind `php artisan serve`) serve
+    // this directory index at /demo without redirecting to /demo/, which breaks
+    // every relative URL below. Normalize before any asset resolves.
+    if (!location.pathname.endsWith('/') && !location.pathname.endsWith('.html')) {
+      location.replace(location.pathname + '/' + location.search + location.hash);
+    }
+  </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PayCan — Developer Demo</title>
   <meta name="description" content="Live demo of the PayCan SDK web components and API. Runs entirely on mock data — no backend or API keys needed.">
@@ -153,7 +161,7 @@
       padding: 0.18rem 0.65rem; border-radius: 999px; white-space: nowrap;
     }
     .env-front { background: hsl(217 91% 96%); color: var(--blue); border: 1px solid hsl(217 91% 85%); }
-    .env-back { background: hsl(262 83% 96%); color: var(--purple); border: 1px solid hsl(262 83% 88%); }
+    .env-back { background: hsl(217 91% 96%); color: var(--blue); border: 1px solid hsl(262 83% 88%); }
     .step-note {
       background: var(--soft); border: 1px solid var(--border); border-radius: 10px;
       padding: 0.7rem 1rem; font-size: 0.875rem; color: hsl(0 0% 25%); margin-top: 0.75rem;
@@ -174,9 +182,7 @@
       background: var(--step-color, var(--accent)); color: #fff;
       display: grid; place-items: center; font-weight: 700; font-size: 0.9rem;
     }
-    .step:nth-of-type(1) .step-num { --step-color: var(--blue); }
-    .step:nth-of-type(2) .step-num { --step-color: var(--purple); }
-    .step:nth-of-type(3) .step-num { --step-color: var(--gold); }
+
     .step h3 { font-size: 1.1rem; }
     .step > p { color: var(--muted); font-size: 0.925rem; margin-bottom: 0.25rem; }
 

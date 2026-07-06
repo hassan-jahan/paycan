@@ -1,26 +1,21 @@
 # PayCan
 
-PayCan is a self-hosted payment-integration platform. External applications sync their users with PayCan and use its unified APIs, JavaScript SDK, and embeddable web components to accept one-time and recurring payments through Stripe and PayPal.
+PayCan is a self-hosted payment-integration platform. External applications sync their users with PayCan and use its unified APIs, JavaScript SDK, and embeddable web components to accept one-time and recurring payments through around 10 lines of code.
 
 [![GitHub stars](https://img.shields.io/github/stars/paycan-app/paycan?style=social)](https://github.com/paycan-app/paycan)
 
-> **Help us build what's next — [star PayCan on GitHub](https://github.com/paycan-app/paycan).**  
-> Stars are our signal for what to prioritize. If you want MCP support, agent skills, or gateways like Razorpay and Paddle, starring the repo tells us (and potential contributors) that the demand is real. It takes one click and makes a big difference.
+> **[Star PayCan on GitHub](https://github.com/paycan-app/paycan).**  
+> Stars are signals of support. It takes one click and makes a big difference.
 
 ## Features
 
-- **Unified payments API** – one API for one-time purchases, subscriptions, digital downloads, license keys, and physical products
-- **Multiple gateways** – Stripe and PayPal out of the box, with a clean architecture for adding more
-- **Admin API** – server-to-server API (secret key) with full CRUD on users, products, prices, orders, settings, and transactions
-- **User API** – customer-facing API scoped to the authenticated user (orders, subscriptions, checkout, transactions)
-- **JavaScript SDK** – typed SDK with built-in caching, token auto-refresh, and guest checkout
+- **Unified payments API** – one API for one-time purchases, subscriptions, digital downloads and more (around 10 lines of code for integration)
+- **Multiple gateways** – Stripe and PayPal out of the box, (more is coming soon)
 - **Web components** – framework-agnostic modal components (checkout, products, subscriptions, orders, transactions) that drop into any site
 - **Self-service portal** – embeddable Vue portal secured by signed URLs
-- **Filament admin panel** – staff GUI at `/admin` for managing everything
+web-components-demo
 
 ## Roadmap
-
-We ship in the open. The items below are planned but not yet implemented — **your GitHub stars directly influence what we tackle first.**
 
 ### Developer experience
 
@@ -31,14 +26,13 @@ We ship in the open. The items below are planned but not yet implemented — **y
 
 ### Payment providers
 
-PayCan's gateway architecture makes adding providers straightforward. These are on the roadmap next:
+These are on the roadmap next:
 
 | Provider | Regions / use case |
 |---|---|
 | [Razorpay](https://razorpay.com/) | India and emerging markets |
 | [Paddle](https://www.paddle.com/) | SaaS billing, tax, and merchant of record |
 | [PayU](https://payu.in/) | India, LATAM, Europe, Africa |
-| [2Checkout (Verifone)](https://www.2checkout.com/) | Global card and local payment methods |
 | [YooKassa](https://yookassa.ru/) | Russia and CIS |
 | [Cryptomus](https://cryptomus.com/) | Cryptocurrency payments |
 
@@ -47,19 +41,6 @@ Want one of these sooner? **[Star the repo](https://github.com/paycan-app/paycan
 ## Tech Stack
 
 Laravel 12 · PHP 8.4 · Vue 3 · Tailwind CSS 4 · shadcn-vue · Filament v4 · Pest v4
-
-## Documentation
-
-| Guide | Description |
-|---|---|
-| [INSTALLATION.md](INSTALLATION.md) | Server requirements, web/CLI installer, webhooks, updates |
-| [API_STRUCTURE.md](API_STRUCTURE.md) | Full API reference, authentication, gateway architecture |
-| [SDK Getting Started](sdk/front/GETTING_STARTED.md) | Integrate the JavaScript SDK step by step |
-| [CHECKOUT_MODAL_README.md](CHECKOUT_MODAL_README.md) | Checkout modal web component in depth |
-| [PORTAL.md](PORTAL.md) | Embeddable self-service portal (signed URLs, iframe) |
-| [QUICK_START.md](QUICK_START.md) / [START_HERE.md](START_HERE.md) / [DEMO.md](DEMO.md) | Portal demo walkthrough |
-| [SETTINGS_CONFIG_GUIDE.md](SETTINGS_CONFIG_GUIDE.md) | Settings system configuration |
-| [TRANSLATIONS.md](TRANSLATIONS.md) | Localization |
 
 ## Quick Start
 
@@ -94,18 +75,11 @@ Pass that token to your frontend and the SDK; it only grants access to that user
 
 ## JavaScript SDK
 
-The SDK lives in [sdk/front/](sdk/front/) and ships in two builds:
-
-| Build | npm entry | Hosted file (served by PayCan) | Contents |
-|---|---|---|---|
-| Full | `@paycan/sdk` | `/sdk/paycan-sdk.js` (min: `paycan-sdk.min.js`) | `PayCan` client, all resources, all modal components |
-| API-only | `@paycan/sdk` (`dist/api.esm.js`) | `/sdk/paycan-sdk.api.js` (min: `paycan-sdk.api.min.js`) | Lightweight `PayCanApi` client: checkout + checkout modal only |
-
-Both are ES modules — load hosted builds with `<script type="module">`.
+The SDK lives in [sdk/front/](sdk/front/) 
 
 ```html
 <script type="module">
-  import { PayCan } from 'https://pay.yourapp.com/sdk/paycan-sdk.js';
+  import { PayCan } from 'https://paycan.yourapp.com/sdk/paycan-sdk.js';
 
   const paycan = new PayCan({ apiUrl: 'https://pay.yourapp.com' });
 
@@ -118,7 +92,6 @@ Both are ES modules — load hosted builds with `<script type="module">`.
 </script>
 ```
 
-Resources available on the client: `paycan.products`, `paycan.checkout`, `paycan.orders`, `paycan.subscriptions`, `paycan.transactions`, plus `me()`, `setUserToken()`, `authenticate()`, `isAuthenticated()`, `logout()`. Full walkthrough: [SDK Getting Started](sdk/front/GETTING_STARTED.md).
 
 ## Web Components (UI Modals)
 
@@ -154,8 +127,6 @@ paycan.openProductsModal({
 });
 ```
 
-Unauthenticated visitors get a guest checkout: the checkout modal asks for an email and creates the order with `billing_email`.
-
 ### Account modals (direct instantiation)
 
 ```javascript
@@ -169,16 +140,6 @@ new SubscriptionsModal(paycan, { theme: 'auto', onClose: () => {} }).open();
 new OrdersModal(paycan, { theme: 'light' }).open();
 new TransactionsModal(paycan, { theme: 'dark', onError: (e) => console.error(e) }).open();
 ```
-
-### Demos
-
-With the dev server running:
-
-- `/checkout-modal-demo` – checkout modal in guest and authenticated modes
-- `/account-modals-demo` – subscriptions, orders, and transactions modals
-- Admin panel → Web Components Demo – all components with live code snippets
-
-More detail: [CHECKOUT_MODAL_README.md](CHECKOUT_MODAL_README.md).
 
 ## Self-Service Portal
 

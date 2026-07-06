@@ -42,6 +42,23 @@ it('generates a valid Sanctum token for demo user', function () {
     ]);
 });
 
+it('renders the demo page with working SDK wiring', function () {
+    $adminUser = AdminUser::factory()->create();
+    actingAs($adminUser, 'admin');
+
+    $response = $this->get('/admin/web-components-demo');
+
+    $response->assertSuccessful();
+
+    // The live SDK must target the origin the page is served from, not
+    // config('app.url'), which breaks with CORS when the two differ.
+    $response->assertSee('apiUrl: window.location.origin', false);
+
+    // Filament v4 exposes notifications via the FilamentNotification global.
+    $response->assertSee('new FilamentNotification()', false);
+    $response->assertDontSee('new Filament.Notification()', false);
+});
+
 it('can authenticate with demo token and access protected endpoints', function () {
     $adminUser = AdminUser::factory()->create();
     actingAs($adminUser, 'admin');
