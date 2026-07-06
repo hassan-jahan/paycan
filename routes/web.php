@@ -23,14 +23,18 @@ Route::middleware('web')->group(function () {
     Route::get('/install/complete', [InstallController::class, 'complete'])->name('install.complete');
 });
 
-// Redirect to installer if not installed
+// Redirect to installer if not installed, otherwise to the admin login
 Route::get('/', function () {
     if (! File::exists(storage_path('installed'))) {
         return redirect()->route('install.welcome');
     }
 
-    return Inertia::render('Welcome');
+    return redirect()->route('filament.admin.auth.login');
 })->name('home');
+
+Route::get('/login', function () {
+    return redirect()->route('filament.admin.auth.login');
+})->name('login');
 
 // Portal entry point - validates signed URL and returns Inertia SPA with JWT token
 Route::get('portal', [PortalController::class, 'index'])

@@ -9,7 +9,7 @@ PayCan is a powerful payment processing platform built with Laravel and Filament
 1. **Download and Extract**
    ```bash
    # Download PayCan
-   git clone https://github.com/your-repo/paycan.git
+   git clone https://github.com/paycan-app/paycan.git
    cd paycan
    ```
 
@@ -108,7 +108,7 @@ If you prefer to install manually:
 
 1. **Clone Repository**
    ```bash
-   git clone https://github.com/your-repo/paycan.git
+   git clone https://github.com/paycan-app/paycan.git
    cd paycan
    ```
 
