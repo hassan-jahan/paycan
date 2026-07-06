@@ -1,0 +1,5 @@
+[    4537ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) %o @ https://pishkhan.cafebazaar.ir/account/login:0
+[   36939ms] [WARNING] [Element Warn][TableColumn]Comparing to render-header, scoped-slot header is easier to use. We recommend users to use scoped-slot header. @ https://pishkhan.cafebazaar.ir/js/chunk-vendors.aa026ef0.js:323
+[   77883ms] [WARNING] [Element Warn][TableColumn]Comparing to render-header, scoped-slot header is easier to use. We recommend users to use scoped-slot header. @ https://pishkhan.cafebazaar.ir/js/chunk-vendors.aa026ef0.js:323
+[   97499ms] [WARNING] [Element Warn][TableColumn]Comparing to render-header, scoped-slot header is easier to use. We recommend users to use scoped-slot header. @ https://pishkhan.cafebazaar.ir/js/chunk-vendors.aa026ef0.js:323
+[  126107ms] [WARNING] [Element Warn][TableColumn]Comparing to render-header, scoped-slot header is easier to use. We recommend users to use scoped-slot header. @ https://pishkhan.cafebazaar.ir/js/chunk-vendors.aa026ef0.js:323
