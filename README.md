@@ -1,61 +1,81 @@
 # PayCan
 
-PayCan is a self-hosted payment-integration platform. External applications sync their users with PayCan and use its unified APIs, JavaScript SDK, and embeddable web components to accept one-time and recurring payments through around 10 lines of code.
+PayCan is a self-hosted payment-integration platform. External applications use its ready-to-use web components and API to accept different payment methods in ~10 lines of code.
 
-[![GitHub stars](https://img.shields.io/github/stars/paycan-app/paycan?style=social)](https://github.com/paycan-app/paycan)
-
-> **[Star PayCan on GitHub](https://github.com/paycan-app/paycan).**  
+> **[⭐️ Star PayCan on GitHub](https://github.com/paycan-app/paycan).**  
 > Stars are signals of support. It takes one click and makes a big difference.
 
-## Features
 
-- **Unified payments API** – one API for one-time purchases, subscriptions, digital downloads and more (around 10 lines of code for integration)
-- **Multiple gateways** – Stripe and PayPal out of the box, (more is coming soon)
-- **Web components** – framework-agnostic modal components (checkout, products, subscriptions, orders, transactions) that drop into any site
-- **Self-service portal** – embeddable Vue portal secured by signed URLs
-web-components-demo
+## Screenshots
 
-## Roadmap
+<table>
+<tr>
+<td align="center">
+<a href=".github/screenshots/checkout-light.png"><img src=".github/screenshots/checkout-light.png" width="200" alt="Checkout modal (light)"></a>
+<br><sub>Checkout modal (light)</sub>
+</td>
+<td align="center">
+<a href=".github/screenshots/checkout-dark.png"><img src=".github/screenshots/checkout-dark.png" width="200" alt="Checkout modal (dark)"></a>
+<br><sub>Checkout modal (dark)</sub>
+</td>
+<td align="center">
+<a href=".github/screenshots/orders-modal.png"><img src=".github/screenshots/orders-modal.png" width="200" alt="Orders modal"></a>
+<br><sub>Orders modal</sub>
+</td>
+<td align="center">
+<a href=".github/screenshots/subscriptions-modal.png"><img src=".github/screenshots/subscriptions-modal.png" width="200" alt="Subscriptions modal"></a>
+<br><sub>Subscriptions modal</sub>
+</td>
+</tr>
+<tr>
+<td colspan="4" align="center">
+<a href=".github/screenshots/admin-orders.png"><img src=".github/screenshots/admin-orders.png" width="900" alt="Admin panel — Orders list"></a>
+<br><sub>Admin panel — Orders</sub>
+</td>
+</tr>
+</table>
 
-### Developer experience
+*Click any screenshot to view it at full size.*
 
-| Item | Description |
-|---|---|
-| **MCP server** | Model Context Protocol integration so AI assistants and IDEs can manage products, orders, checkout, and settings through PayCan |
-| **Agent skills** | Ready-made Cursor / Claude skills for common PayCan workflows — install, sync users, embed checkout, configure webhooks |
 
-### Payment providers
+## 👨‍💻 Philosophy
 
-These are on the roadmap next:
+**Payment integration shouldn't be complicated.**
 
-| Provider | Regions / use case |
-|---|---|
-| [Razorpay](https://razorpay.com/) | India and emerging markets |
-| [Paddle](https://www.paddle.com/) | SaaS billing, tax, and merchant of record |
-| [PayU](https://payu.in/) | India, LATAM, Europe, Africa |
-| [YooKassa](https://yookassa.ru/) | Russia and CIS |
-| [Cryptomus](https://cryptomus.com/) | Cryptocurrency payments |
+We believe every app should be able to collect money with just a few lines of code, without being locked into a single payment provider. PayCan's mission is to create a unified, vendor-agnostic payment integration that works seamlessly with any payment gateway while maintaining simplicity and flexibility.
 
-Want one of these sooner? **[Star the repo](https://github.com/paycan-app/paycan)** and, if you can, [open an issue](https://github.com/paycan-app/paycan/issues) naming the provider or feature you need. Pull requests for roadmap items are always welcome — see [Development](#development) to get started.
+No webhook handling, no customer creation, no subscription management.
 
-## Tech Stack
 
-Laravel 12 · PHP 8.4 · Vue 3 · Tailwind CSS 4 · shadcn-vue · Filament v4 · Pest v4
+- **Developer/Agent First**: Minimal setup, maximum functionality
+- **No Vendor Lock-in**: Easily switch between payment providers
+- **Unified API**: One interface for all payment gateways
+- **Multiple Payment Gateways**: Currently supports PayPal and Stripe (Razorpay, Paddle, PayU, YooKassa, and Crypto on the roadmap)
+- **Subscription and One-Time Plans**: Handle recurring payments effortlessly
 
-## Quick Start
+- **Plan Management**: Dynamic subscription plan handling
 
-1. **Install PayCan** – follow [INSTALLATION.md](INSTALLATION.md) (web installer at `/install` or `php artisan paycan:install`).
-2. **Configure a payment gateway** – Admin Panel → Settings → Payment Providers, and set up webhooks (see [INSTALLATION.md](INSTALLATION.md#-post-installation-steps)).
-3. **Get your API secret key** – Admin Panel → Settings → API Secret Key.
-4. **Create products and prices** – in the admin panel or via the Admin API.
-5. **Sync a user and integrate** – see below.
 
-## Authentication
+Want more payment providers? **[⭐️ Star the repo](https://github.com/paycan-app/paycan)** and, if you can, [open an issue](https://github.com/paycan-app/paycan/issues) naming the provider or feature you need. Pull requests for roadmap items are always welcome 
+
+
+### Development Notice
+
+>This application is currently under active development and is not production-ready. Please use this for learning, development, and testing purposes only. Want to contribute? We'd love your help! 
+
+## 🚀 Quick Start
+
+#### 1. Install PayCan
+
+Follow [INSTALLATION.md](INSTALLATION.md) (web installer at `/install`, demo with more code snippets at `/demo`), then use the admin panel to create products and get your API secret key. We have two types of tokens:
+
 
 | Credential | Header | Used for |
 |---|---|---|
 | API secret key | `X-API-Key: <key>` | Admin API (server-to-server only — never expose it to browsers) |
 | User token (JWT) | `Authorization: Bearer <token>` | User API and SDK, scoped to one user |
+
+#### 2. Integrate Backend
 
 Your backend exchanges the API secret key for a user-scoped token:
 
@@ -71,24 +91,29 @@ curl -X POST https://pay.yourapp.com/api/admin/users/sync \
 # → { "token": "eyJ...", "user": { ... } }
 ```
 
-Pass that token to your frontend and the SDK; it only grants access to that user's own data. See [API_STRUCTURE.md](API_STRUCTURE.md) for the complete route reference (user, admin, public, and webhook endpoints).
+#### 3. Integrate Frontend
 
-## JavaScript SDK
-
-The SDK lives in [sdk/front/](sdk/front/) 
+The SDK lives in [sdk/front/](sdk/front/)
 
 ```html
 <script type="module">
-  import { PayCan } from 'https://paycan.yourapp.com/sdk/paycan-sdk.js';
+  import { PayCan, SubscriptionsModal} from 'https://paycan.yourapp.com/sdk/paycan-sdk.js';
 
   const paycan = new PayCan({ apiUrl: 'https://pay.yourapp.com' });
 
-  // Token fetched from YOUR backend (which calls /api/admin/users/sync)
+  // Token fetched from YOUR backend (which calls the users/sync endpoint above)
   const { token } = await (await fetch('/api/paycan/token')).json();
   paycan.setUserToken(token);
 
+  // Open checkout modal for a product
+  paycan.openCheckoutModal(productId, { theme: 'auto' });
+
+  // Open subscription management modal for the user
+  new SubscriptionsModal(paycan).open();
+
+  // Or, if you prefer your own UI, get user orders directly from the API
   const orders = await paycan.orders.list();
-  const active = await paycan.subscriptions.listActive();
+
 </script>
 ```
 
@@ -99,7 +124,7 @@ The SDK includes five framework-agnostic modal components. They render inside a 
 
 | Component | Purpose | Auth required |
 |---|---|---|
-| `CheckoutModal` | Full checkout flow: price selection, gateway selection, guest email | No (guest checkout supported) |
+| `CheckoutModal` | Full checkout flow: price selection, gateway selection, guest email | No (guest checkout is in beta) |
 | `ProductsModal` | Browse products/plans; opens checkout on selection; can drive plan changes | No |
 | `SubscriptionsModal` | List, cancel, and resume the user's subscriptions | Yes |
 | `OrdersModal` | The user's order history with downloads and licenses | Yes |
@@ -141,21 +166,7 @@ new OrdersModal(paycan, { theme: 'light' }).open();
 new TransactionsModal(paycan, { theme: 'dark', onError: (e) => console.error(e) }).open();
 ```
 
-## Self-Service Portal
 
-Alternatively, embed the complete hosted portal (products, checkout, orders, subscriptions) with one signed URL — no SDK code required:
-
-```php
-use App\Services\PortalService;
-
-$portalUrl = PortalService::generatePortalUrl($userId, 24); // expires in 24h
-```
-
-```html
-<iframe src="{{ $portalUrl }}" width="100%" height="800"></iframe>
-```
-
-See [PORTAL.md](PORTAL.md) and the demo at `/portal-demo`.
 
 ## Development
 
@@ -170,8 +181,6 @@ php artisan test           # run the Pest test suite
 vendor/bin/pint --dirty    # code style
 ```
 
-After any breaking change, update the APIs, OpenAPI docs, SDK, portal, tests, and docs in lock-step (see [CLAUDE.md](CLAUDE.md)).
-
 ## Security
 
 - Keep the API secret key on your server only; browsers must only ever receive user-scoped tokens.
@@ -180,3 +189,6 @@ After any breaking change, update the APIs, OpenAPI docs, SDK, portal, tests, an
 - Store secrets in `.env`, never in code or the database.
 
 Found a vulnerability? Please report it privately rather than opening a public issue.
+
+> **[⭐️ Star PayCan on GitHub](https://github.com/paycan-app/paycan).**  
+> Stars are signals of support. It takes one click and makes a big difference.
